@@ -2,11 +2,9 @@
     single linked list merge
     This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
-use std::vec::*;
 
 #[derive(Debug)]
 struct Node<T> {
@@ -53,11 +51,11 @@ impl<T> LinkedList<T> {
         self.length += 1;
     }
 
-    pub fn get(&mut self, index: i32) -> Option<&T> {
+    pub fn get(&self, index: i32) -> Option<&T> {
         self.get_ith_node(self.start, index)
     }
 
-    fn get_ith_node(&mut self, node: Option<NonNull<Node<T>>>, index: i32) -> Option<&T> {
+    fn get_ith_node(&self, node: Option<NonNull<Node<T>>>, index: i32) -> Option<&T> {
         match node {
             None => None,
             Some(next_ptr) => match index {
@@ -66,13 +64,45 @@ impl<T> LinkedList<T> {
             },
         }
     }
-    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self {
-        //TODO
-        Self {
-            length: 0,
-            start: None,
-            end: None,
+
+    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+    where
+        T: Clone + PartialOrd,
+    {
+        let mut merged = Self::default();
+
+        let mut idx_a = 0;
+        let mut idx_b = 0;
+        // 挑一个链表取所有 node，假设选中 a，那么两种可能
+        // 1. a 先取完，那么把 b 剩下的拼上去
+        // 2. b 先取完，那么继续遍历即可
+
+        // 尝试取 a
+        while let Some(node_a) = list_a.get(idx_a).cloned() {
+            match list_b.get(idx_b).cloned() {
+                Some(node_b) => {
+                    if node_a <= node_b {
+                        merged.add(node_a);
+                        idx_a += 1;
+                    } else {
+                        merged.add(node_b);
+                        idx_b += 1;
+                    }
+                }
+                None => {
+                    merged.add(node_a);
+                    idx_a += 1;
+                }
+            };
         }
+
+        while let Some(node_b) = list_b.get(idx_b).cloned() {
+            merged.add(node_b);
+            idx_b += 1;
+        }
+
+        assert_eq!(merged.length, list_a.length + list_b.length);
+        merged
     }
 }
 
@@ -139,7 +169,7 @@ mod tests {
             list_b.add(vec_b[i]);
         }
         println!("list a {} list b {}", list_a, list_b);
-        let mut list_c = LinkedList::<i32>::merge(list_a, list_b);
+        let list_c = LinkedList::<i32>::merge(list_a, list_b);
         println!("merged List is {}", list_c);
         for i in 0..target_vec.len() {
             assert_eq!(target_vec[i], *list_c.get(i as i32).unwrap());
@@ -160,7 +190,7 @@ mod tests {
             list_b.add(vec_b[i]);
         }
         println!("list a {} list b {}", list_a, list_b);
-        let mut list_c = LinkedList::<i32>::merge(list_a, list_b);
+        let list_c = LinkedList::<i32>::merge(list_a, list_b);
         println!("merged List is {}", list_c);
         for i in 0..target_vec.len() {
             assert_eq!(target_vec[i], *list_c.get(i as i32).unwrap());
